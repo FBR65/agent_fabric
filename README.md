@@ -14,6 +14,20 @@ Agent Fabric is a powerful tool that allows you to create specialized AI agents 
 - 📱 **User-Friendly Interface** - Clean Gradio web interface with tabs and examples
 - 📥 **Easy Download** - Direct download of generated agents and requirements
 
+## What Can You Create?
+
+Agent Fabric uses intelligent analysis to create specialized agents for virtually any task. Simply describe what you need and the system will generate an optimized agent. Examples include:
+
+- **Prompt Engineers** - Create multiple prompt variations using different techniques (Zero-Shot, Few-Shot, Chain-of-Thought, Role-Based, Instruction-Following)
+- **Content Writers** - Speech writers, blog post creators, marketing copy generators
+- **Language Experts** - Translators, grammar checkers, style improvers, text summarizers
+- **Code Specialists** - Programming assistants, code converters between languages, debugging helpers
+- **Research Assistants** - Information gatherers, web searchers, data analysts
+- **Communication Tools** - Email composers, presentation creators, documentation writers
+- **Analysis Experts** - Sentiment analyzers, data interpreters, review evaluators
+
+The system intelligently creates the optimal system prompt and configuration for whatever you describe, no predefined templates needed.
+
 ## Supported Agent Types
 
 - **Code Conversion** - Convert code between programming languages

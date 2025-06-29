@@ -4,6 +4,43 @@ from jinja2 import Template
 class AgentGenerator:
     """Generator für PydanticAI Agenten basierend auf natürlicher Sprache."""
 
+    def __init__(self):
+        """Initialisiere den AgentGenerator mit einem Prompt-Engineering-Agent."""
+        self.prompt_engineer = self._create_prompt_engineer()
+
+    def _create_prompt_engineer(self):
+        """Erstelle einen AI-Agent für intelligente System-Prompt-Generierung."""
+        from pydantic_ai import Agent
+        from pydantic_ai.models.openai import OpenAIModel
+        from pydantic_ai.providers.openai import OpenAIProvider
+        import os
+
+        # LLM Setup (aus Umgebung oder Standard)
+        endpoint = os.getenv("LLM_ENDPOINT", "http://localhost:11434/v1")
+        api_key = os.getenv("LLM_API_KEY", "sk-dummy")
+        model_name = os.getenv("LLM_MODEL", "qwen2.5:latest")
+
+        provider = OpenAIProvider(base_url=endpoint, api_key=api_key)
+        model = OpenAIModel(provider=provider, model_name=model_name)
+
+        system_prompt = """Du bist ein Experte für AI-Agent System-Prompt Engineering.
+
+Analysiere die Nutzerbeschreibung und erstelle einen perfekt spezialisierten System-Prompt für den gewünschten AI-Agent.
+
+WICHTIG: Verstehe was der Nutzer WIRKLICH will:
+- Ein "Prompt Creator" soll verschiedene Prompt-Techniken anwenden
+- Ein "Redenschreiber" soll Reden verfassen
+- Ein "Code-Konverter" soll Code zwischen Sprachen konvertieren
+- etc.
+
+Der System-Prompt muss den Agent so konfigurieren, dass er GENAU das tut was beschrieben wurde.
+
+Für Prompt Creator/Engineer: Erstelle einen System-Prompt der bei jeder Anfrage automatisch alle gängigen Prompt-Techniken (Zero-Shot, Few-Shot, Chain-of-Thought, Role-Based, Instruction-Following) anwendet.
+
+Antworte NUR mit dem System-Prompt, keine Erklärungen."""
+
+        return Agent(model=model, system_prompt=system_prompt, retries=2)
+
     def generate_agent(
         self,
         description: str,
@@ -165,249 +202,55 @@ if __name__ == "__main__":
         asyncio.run(interactive_mode())
 '''
 
+    async def _generate_system_prompt_ai(self, description: str) -> str:
+        """Verwende AI-Agent um optimalen System-Prompt zu generieren."""
+        try:
+            prompt_request = f"""Erstelle einen optimalen System-Prompt für einen AI-Agent basierend auf dieser Beschreibung:
+
+"{description}"
+
+Der System-Prompt soll den Agent perfekt für diese spezifische Aufgabe konfigurieren."""
+
+            result = await self.prompt_engineer.run(prompt_request)
+
+            if hasattr(result, "output"):
+                return result.output
+            elif hasattr(result, "data"):
+                return result.data
+            else:
+                return str(result)
+
+        except Exception as e:
+            # Fallback auf einfachen Prompt
+            return f"""Du bist ein spezialisierter AI-Agent.
+
+Aufgabe: {description}
+
+Führe deine Aufgabe professionell und präzise aus. Gib strukturierte, hilfreiche Antworten."""
+
     def _generate_system_prompt(self, description: str) -> str:
-        """Generiere intelligenten System-Prompt basierend auf Beschreibung."""
+        """Generiere intelligenten System-Prompt mit AI-Agent."""
+        import asyncio
 
-        # Analysiere die Beschreibung und generiere spezialisierten Prompt
-        description_lower = description.lower()
-
-        # Prompt Engineering
-        if any(word in description_lower for word in ["prompt", "engineer"]):
-            return f"""Du bist ein Experte für Prompt Engineering und Textgenerierung.
-
-Aufgabe: {description}
-
-Spezialisierung:
-- Verstehe Nutzeranfragen und deren Kontext perfekt
-- Erstelle strukturierte, überzeugende Texte
-- Entwickle präzise Prompts für verschiedene Anwendungsfälle
-- Berücksichtige Zielgruppe und Kommunikationsziel
-- Nutze rhetoische Techniken und Textstruktur
-
-Verhalten:
-- Frage nach Details wenn die Anfrage unklar ist
-- Erstelle vollständige, verwendbare Texte oder Prompts
-- Erkläre deine Herangehensweise kurz
-- Biete Verbesserungsvorschläge an"""
-
-        # Reden und Präsentationen
-        elif any(
-            word in description_lower
-            for word in ["rede", "präsentation", "vortrag", "speech"]
-        ):
-            return f"""Du bist ein Experte für Rhetorik und Redenentwicklung.
+        try:
+            # Verwende AI-Agent für dynamische Prompt-Generierung
+            return asyncio.run(self._generate_system_prompt_ai(description))
+        except Exception as e:
+            # Fallback falls AI-Agent nicht verfügbar
+            return f"""Du bist ein spezialisierter AI-Agent.
 
 Aufgabe: {description}
 
-Spezialisierung:
-- Erstelle überzeugende, strukturierte Reden
-- Berücksichtige Zielgruppe und Anlass
-- Nutze rhetorische Stilmittel effektiv
-- Entwickle klare Argumentationslinien
-- Achte auf Timing und Präsentationsfluss
-
-Antwortformat:
-- Vollständige Rede mit Struktur
-- Hinweise zu Betonung und Pausen
-- Anpassungsvorschläge für verschiedene Kontexte"""
-
-        # Code-Konvertierung
-        if any(
-            word in description_lower
-            for word in ["konvertier", "convert", "übersetze", "translate"]
-        ) and any(
-            word in description_lower
-            for word in ["code", "python", "go", "java", "javascript", "c++", "rust"]
-        ):
-            return f"""Du bist ein Experte für Code-Konvertierung zwischen Programmiersprachen.
-
-Aufgabe: {description}
-
-Spezialisierung:
-- Verstehe die Syntax und Semantik beider Sprachen perfekt
-- Konvertiere Code präzise und idiomatisch
-- Erkläre wichtige Unterschiede und Besonderheiten
-- Achte auf Datentypen, Speicherverwaltung und sprachspezifische Konzepte
-- Gib vollständig funktionsfähigen Code aus
-- Kommentiere kritische Konvertierungsentscheidungen
-
-Antwortformat:
-1. Konvertierter Code
-2. Erklärung wichtiger Änderungen
-3. Hinweise zu Besonderheiten der Zielsprache"""
-
-        # Text-Analyse und NLP
-        elif any(
-            word in description_lower
-            for word in ["sentiment", "emotion", "analyse", "klassifizier", "kategori"]
-        ):
-            return f"""Du bist ein Experte für Textanalyse und Natural Language Processing.
-
-Aufgabe: {description}
-
-Spezialisierung:
-- Analysiere Texte präzise und strukturiert
-- Erkenne Emotionen, Sentiment und Kontext
-- Klassifiziere nach relevanten Kategorien
-- Berücksichtige Nuancen, Ironie und Mehrdeutigkeiten
-- Gib strukturierte, nachvollziehbare Ergebnisse
-
-Antwortformat:
-- Hauptergebnis klar und präzise
-- Begründung der Analyse
-- Konfidenzwerte wenn möglich"""
-
-        # Textbearbeitung und -optimierung
-        elif any(
-            word in description_lower
-            for word in [
-                "korrigier",
-                "verbessere",
-                "optimiere",
-                "schreib",
-                "text",
-                "grammatik",
-            ]
-        ):
-            return f"""Du bist ein Experte für Textbearbeitung und Sprachoptimierung.
-
-Aufgabe: {description}
-
-Spezialisierung:
-- Korrigiere Rechtschreibung und Grammatik perfekt
-- Optimiere Stil, Klarheit und Lesbarkeit
-- Behalte den ursprünglichen Ton und Intention
-- Erkläre bedeutende Änderungen
-- Schlage Verbesserungsalternativen vor
-
-Verhalten:
-- Gib den überarbeiteten Text zurück
-- Markiere wesentliche Änderungen
-- Erkläre Verbesserungslogik kurz"""
-
-        # Zusammenfassung und Extraktion
-        elif any(
-            word in description_lower
-            for word in [
-                "zusammenfass",
-                "summary",
-                "extrahier",
-                "hauptpunkt",
-                "kernaussage",
-            ]
-        ):
-            return f"""Du bist ein Experte für Textanalyse und Informationsextraktion.
-
-Aufgabe: {description}
-
-Spezialisierung:
-- Identifiziere Kernaussagen und Hauptpunkte präzise
-- Erstelle strukturierte, prägnante Zusammenfassungen
-- Bewahre wichtige Details und Kontext
-- Verwende hierarchische Gliederung
-- Achte auf Vollständigkeit bei Kürze
-
-Antwortformat:
-- Kernaussage/Hauptthema
-- Wichtigste Punkte strukturiert
-- Relevante Details
-- Schlussfolgerungen falls angebracht"""
-
-        # Übersetzung
-        elif any(
-            word in description_lower for word in ["übersetze", "translate", "sprache"]
-        ):
-            return f"""Du bist ein professioneller Übersetzer und Sprachexperte.
-
-Aufgabe: {description}
-
-Spezialisierung:
-- Erkenne Quellsprache automatisch
-- Übersetze präzise und kontextgerecht
-- Berücksichtige kulturelle Nuancen
-- Verwende idiomatische Ausdrücke der Zielsprache
-- Erkläre Mehrdeutigkeiten oder kulturelle Besonderheiten
-
-Verhalten:
-- Gib die Übersetzung direkt aus
-- Bei Mehrdeutigkeiten: biete Alternativen
-- Erkläre nur bei besonderen Herausforderungen"""
-
-        # Web-Suche und Recherche
-        elif any(
-            word in description_lower
-            for word in ["suche", "search", "recherche", "finde", "information"]
-        ):
-            return f"""Du bist ein Experte für Informationsrecherche und -bewertung.
-
-Aufgabe: {description}
-
-Spezialisierung:
-- Führe systematische Recherchen durch
-- Bewerte Quellen kritisch auf Glaubwürdigkeit
-- Fasse komplexe Informationen verständlich zusammen
-- Gib relevante, aktuelle Ergebnisse
-- Zitiere Quellen wenn möglich
-
-Antwortformat:
-- Direkte Antwort auf die Frage
-- Relevante Details strukturiert
-- Quellenangaben
-- Einschätzung der Informationsqualität"""
-
-        # Programmierung und Code
-        elif any(
-            word in description_lower
-            for word in ["programmier", "code", "entwickl", "algorithm", "funktion"]
-        ):
-            return f"""Du bist ein erfahrener Software-Entwickler und Programmierexperte.
-
-Aufgabe: {description}
-
-Spezialisierung:
-- Schreibe sauberen, effizienten Code
-- Erkläre Programmlogik verständlich
-- Berücksichtige Best Practices
-- Teste mentale Edge Cases
-- Dokumentiere komplexe Logik
-
-Antwortformat:
-- Vollständiger, funktionsfähiger Code
-- Erklärung der Implementierung
-- Hinweise zu Verwendung und Besonderheiten"""
-
-        # Standard: Intelligente Ableitung aus Beschreibung
-        else:
-            # Extrahiere Kernaktivität aus der Beschreibung
-            verbs = []
-            if "analysiere" in description_lower:
-                verbs.append("analysieren")
-            if "erstelle" in description_lower:
-                verbs.append("erstellen")
-            if "beantworte" in description_lower:
-                verbs.append("beantworten")
-            if "erkläre" in description_lower:
-                verbs.append("erklären")
-            if "löse" in description_lower:
-                verbs.append("lösen")
-
-            core_activity = verbs[0] if verbs else "bearbeiten"
-
-            return f"""Du bist ein spezialisierter AI-Agent mit Expertise in folgendem Bereich:
-
-Aufgabe: {description}
-
-Als Experte für diese spezifische Aufgabe:
-- Führe die Aufgabe mit höchster Präzision aus
-- Nutze dein spezialisiertes Wissen optimal
-- Gib strukturierte, actionable Antworten
-- Erkläre dein Vorgehen wenn nützlich
-- Fokussiere dich ausschließlich auf die gestellte Aufgabe
-
-Wichtig: {core_activity.capitalize()} mit professioneller Expertise und liefere praktische, verwendbare Ergebnisse."""
+Führe deine Aufgabe professionell und präzise aus. Gib strukturierte, hilfreiche Antworten."""
 
     def _generate_response_model(self, description: str) -> str:
         """Generiere Pydantic Response Model basierend auf Beschreibung."""
+        return '''class AgentResponse(BaseModel):
+    """Response-Model für den generierten Agent."""
+    
+    response: str = Field(description="Die Hauptantwort des Agents")
+    status: str = Field(default="success", description="Status der Ausführung")
+    additional_info: Optional[dict] = Field(default=None, description="Zusätzliche Informationen")'''
         return '''class AgentResponse(BaseModel):
     """Response-Model für den generierten Agent."""
     
